@@ -1,0 +1,69 @@
+# Shadow Hacker — Changelog
+
+## v2.0.0 (2026)
+
+### Rebrand
+- Full rebrand from lscript / Hak9 → Shadow Hacker
+- Launch command: `shadow` (symlink in /usr/local/bin)
+- New hooded-figure ASCII art banner with colour-cycling green code rain
+- Main text and logo colours configurable via Settings menu
+
+### Menus added
+- **Reconnaissance** — RustScan, Netdiscover, OpenVAS, Angry IP Scanner,
+  Routersploit, masscan, Eternal Scanner, Netattack2, Smart TV Discovery,
+  HexStrike AI
+- **Bluetooth Tools** — bluetoothctl, BTScanner, Bluelog, Spooftooph,
+  Bettercap BLE, L2ping, Wireless Inventory, BLE Toy Lab
+- **Remote Access additions** — PAYGEN, revshellgen, InternalAllTheThings
+- **WiFi additions** — Sparrow-WiFi
+- **Information Gathering additions** — Wireshark shortcut (w)
+
+### PentestGPT integration
+- Banner status line shows ACTIVE / NO KEY / OFF
+- `pgpt` command from any prompt opens setup/launch
+- `?` in any tool menu triggers context-aware PentestGPT assist
+- API key stored in settings/openai_key.txt (chmod 600)
+
+### Tor / identity
+- `ni` shortcut from main menu requests new TorGhost identity
+- Banner shows live public IP and Tor status
+- TorGhost installed from github.com/INTELEON404/torghost.git
+
+### Keyboard shortcuts (lh*)
+- `lh1` → scripts/handshake-helper — WPA handshake capture
+- `lh2` → scripts/deauth-helper    — Deauth attack helper
+- `lh3` → scripts/monitor-mode     — Monitor mode toggle
+- `lh4` → scripts/wpa-scan         — WPA network scan
+- All four launch in a side terminal via gnome-terminal
+
+### MITM scripts renamed
+- ls/l131.sh → mitm/arp-spoof-fwd.sh
+- ls/l132.sh → mitm/arp-spoof-rev.sh
+- ls/l133.sh → mitm/dns2proxy.sh
+- All MITM dispatch references updated to new paths
+
+### Terminal auto-resize
+- Each menu resizes terminal on open (wifi 45×110, website 50×120,
+  bluetooth 42×105, recon 42×105, remote/info 48×115, other 42×105)
+
+### Tools replaced
+- Dracnmap (unmaintained) → RustScan
+- nWatch (no GitHub) → masscan
+- Netattack3/Gameye98 → Netattack2 (chrizator/netattack2)
+- anonym8 check → TorGhost check
+
+### Fixes
+- TorGhost enable/disable wrapped in subshell (preserves working dir)
+- btscanner now runs rfkill unblock + hciconfig hci0 up before launch
+- Removed terms-of-use gate (IAGREE.txt) that blocked startup
+- Fixed scan command (arp-scan pipe/tee)
+- Netattack updated to python3/pip3
+- Bluetooth tools rebuilt for modern Kali (hcitool deprecated)
+- Window resize on launch: 40 rows × 95 cols
+- install.sh: progress bar, dynamic RustScan .deb from GitHub releases API
+
+### Project structure
+- bin/hak9         → bin/shadowhacker
+- hak/hak1–hak43  → scripts/ (descriptive names)
+- ls/l131–133.sh  → mitm/ (arp-spoof-fwd/rev, dns2proxy)
+- /root/recon     → /root/shadowhacker
