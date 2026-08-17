@@ -367,6 +367,7 @@ function pentestgpt_assist
 }
 function banner
 {
+	printf '\033[8;38;95t' 2>/dev/null
 	check_wlans
 	# ─── Color-cycling hooded hacker ─────────────────────────────────────────
 	local G1="\e[2;32m"
@@ -393,7 +394,7 @@ function banner
 	echo -e ""
 	echo -e ""
 	echo -e "         ${_C}╔═══════════════════════════════════════════════════╗${CE}"
-	echo -e "         ${_B}║${_D}   ░▒▓  ${G3}S H A D O W   H A C K E R  ${_B}▓▒░   ${_B}║${CE}"
+	echo -e "         ${_B}║${_D}        ░▒▓  ${G3}S H A D O W   H A C K E R${_D}  ▓▒░        ${_B}║${CE}"
 	echo -e "         ${_C}╚═══════════════════════════════════════════════════╝${CE}"
 	echo -e "         ${_A}v${VERSION}  ${G2}─  by Ships2024${CE}"
 	echo -e ""
@@ -410,22 +411,22 @@ function banner
 		echo -e ""$YS" 1"$CE") Enable $WLANN${SPACESN}  "$YS"d1"$CE") Disable $WLANN${SPACESN}   "$RS"|"$CE" "$YS" start"$CE") Monitor $MON_STATUS"
 		echo -e ""$YS" 2"$CE") Enable $WLANNM${SPACESM} "$YS"d2"$CE") Disable $WLANNM${SPACESM}  "$RS"|"$CE"   "$YS"  stop"$CE") Stop monitor"
 	fi
-	echo -e ""$YS" 3"$CE") Spoof MAC address   		"$YS"d3"$CE") Restore real MAC     "$RS"|"$CE" "$YS"update"$CE") Check for updates"
+	echo -e ""$YS" 3"$CE") Spoof MAC address       "$YS"d3"$CE") Restore real MAC       "$RS"|"$CE" "$YS"update"$CE") Check for updates"
 	if [[ -f /root/torghost/torghost.py ]]
 	then
-	echo -e ""$YS" 4"$CE") Enable Tor routing  		"$YS"d4"$CE") Disable Tor routing  "$RS"|"$CE" "$YS"errors"$CE") Fix some errors"
+	echo -e ""$YS" 4"$CE") Enable Tor routing       "$YS"d4"$CE") Disable Tor routing    "$RS"|"$CE" "$YS"errors"$CE") Fix some errors"
 	else
-	echo -e ""$RS" 4"$CE") Enable Tor routing  		"$RS"d4"$CE") Disable Tor routing  "$RS"|"$CE" "$YS"errors"$CE") Fix some errors"
+	echo -e ""$RS" 4"$CE") Enable Tor routing       "$RS"d4"$CE") Disable Tor routing    "$RS"|"$CE" "$YS"errors"$CE") Fix some errors"
 	fi
 	if [[ -f /usr/bin/anonsurf ]]
 	then
-	echo -e ""$YS" 5"$CE") Enable AnonSurf     		"$YS"d5"$CE") Disable AnonSurf     "$RS"|"$CE"     "$YS"ks"$CE") Keyboard shortcuts"
-	echo -e ""$YS" 6"$CE") AnonSurf status     		"$YS"d6"$CE") Restart AnonSurf     "$RS"|"$CE"      "$YS"s"$CE") Settings menu"
+	echo -e ""$YS" 5"$CE") Enable AnonSurf          "$YS"d5"$CE") Disable AnonSurf       "$RS"|"$CE"    "$YS"ks"$CE") Keyboard shortcuts"
+	echo -e ""$YS" 6"$CE") AnonSurf status          "$YS"d6"$CE") Restart AnonSurf       "$RS"|"$CE"     "$YS"s"$CE") Settings menu"
 	else
-	echo -e ""$RS" 5"$CE") Enable AnonSurf     		"$RS"d5"$CE") Disable AnonSurf     "$RS"|"$CE"     "$YS"ks"$CE") Keyboard shortcuts"
-	echo -e ""$RS" 6"$CE") AnonSurf status    		"$RS"d6"$CE") Restart AnonSurf     "$RS"|"$CE"      "$YS"s"$CE") Settings menu"
+	echo -e ""$RS" 5"$CE") Enable AnonSurf          "$RS"d5"$CE") Disable AnonSurf       "$RS"|"$CE"    "$YS"ks"$CE") Keyboard shortcuts"
+	echo -e ""$RS" 6"$CE") AnonSurf status          "$RS"d6"$CE") Restart AnonSurf       "$RS"|"$CE"     "$YS"s"$CE") Settings menu"
 	fi
-	echo -e ""$YS" 7"$CE") Show public IP         "$YS" 7"$CE") Show public IP         "$RS"|"$CE" "$YS"   ni"$CE") New Tor identity"
+	echo -e ""$YS" 7"$CE") Show public IP              "$YS"                          "$RS"|"$CE" "$YS"   ni"$CE") New Tor identity"
 	echo -e ""$YS" 8"$CE") Show current MAC       "$YS"d8"$CE") Spoof random MAC       "$RS"|"$CE" "$YS"tools"$CE") Tools menu"
 	echo -e ""$YS" 9"$CE") TOOLS                  "$YS"15"$CE") Spoof EMAIL            "$RS"|"$CE" "$YS"  22"$CE") Show bandwidth"
 	if [[ -f /root/ngrok ]]
@@ -10014,7 +10015,7 @@ function main_options
 	elif [[ "$YORNAA" = "interface" ]]
 	then
 		interface_menu
-	elif [[ "$YORNAA" = "9" ]]
+	elif [[ "$YORNAA" = "9" || "$YORNAA" = "tools" ]]
 	then
 		tools_menu
 	elif [[ "$YORNAA" = "l" ]]
@@ -10266,12 +10267,16 @@ function main_options
 		pentestgpt_setup
 	elif [[ "$YORNAA" = "ni" ]]
 	then
-		if [[ -f /root/torghost/torghost.py ]]; then
-			echo -e "Requesting new Tor identity..."
-			(cd /root/torghost && python3 torghost.py -r) && echo -e "${YS}New identity acquired.${CE}" || echo -e "${RS}Failed (is Tor routing active?)${CE}"
+		echo -e "Requesting new Tor identity..."
+		if printf 'AUTHENTICATE ""\r\nSIGNAL NEWNYM\r\nQUIT\r\n' | nc -w 2 127.0.0.1 9051 2>/dev/null | grep -q '250'; then
+			PUBLIC_IP=$(curl -s --max-time 5 https://api.ipify.org 2>/dev/null || echo "N/A")
+			echo -e "${YS}New identity acquired. Public IP: $PUBLIC_IP${CE}"
 			sleep 2
+		elif [[ -f /root/torghost/torghost.py ]]; then
+			(cd /root/torghost && python3 torghost.py -x 2>/dev/null; sleep 2; python3 torghost.py -s 2>/dev/null) &
+			echo -e "${YS}Restarting TorGhost for new identity...${CE}"; sleep 4
 		else
-			echo -e "${RS}TorGhost not installed.${CE}"; sleep 2
+			echo -e "${RS}Failed - enable Tor routing first (option 4)${CE}"; sleep 2
 		fi
 	elif [[ "$YORNAA" = "eternalblue" ]]
 	then
