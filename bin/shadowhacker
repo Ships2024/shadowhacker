@@ -1,7 +1,7 @@
 #! /bin/bash
 
 # set -x
-VERSION=2.0.0
+VERSION=1.0.0
 #Number of tools with keyboard shortcut support
 HOWMANYTOOLS=53
 BACKL="0"
@@ -398,38 +398,40 @@ function banner
 	echo -e "         ${_C}╚═══════════════════════════════════════════════════╝${CE}"
 	echo -e "         ${_A}v${VERSION}  ${G2}─  by Ships2024${CE}"
 	echo -e ""
-	echo -e "  ${G2}Host:${CE} $CURRENT_HOST  ${G2}|${CE} "$YS"hostname"$CE") rename   ${G2}MAC:${CE} $CURRENT_MAC   ${G2}MAC Rand:${CE} $MACRAND_STATUS   ${G2}Tor:${CE} $TOR_STATUS   ${G2}IP:${CE} $PUBLIC_IP"
+	echo -e "  ${G2}Host:${CE} $CURRENT_HOST  ${G2}|${CE} "$YS"hostname"$CE") rename   ${G2}MAC:${CE} $CURRENT_MAC   ${G2}Public IP:${CE} $PUBLIC_IP"
+	echo -e "  ${G2}MAC Rand:${CE} $MACRAND_STATUS   ${G2}Tor:${CE} $TOR_STATUS   
 	echo -e "  ${G2}AI:${CE} PentestGPT $PGPT_STATUS   ${YS}pgpt${CE}) setup/launch   ${YS}?${CE}) context help   ${YS}ni${CE}) new Tor identity"
 	echo -e ""
 	if [[ "$WLANCHECKING" = "" ]]
 	then
+		echo -e ""$YS"if"$CE") Ifconfig           "$YS"l"$CE") Local IPs & gateways "$RS"|"$CE"  "$YS"scan"$CE") Arp-scan network"
 		echo -e ""$RS" 1"$CE") Enable "$RS"$WLANN"$CE"${SPACESN}"$RS"d1"$CE") Disable "$RS"$WLANN"$CE"${SPACESN}"$RS"|"$CE" "$YS" start"$CE") Monitor $MON_STATUS"
 		echo -e ""$RS" 2"$CE") Enable "$RS"$WLANNM"$CE"${SPACESM}"$RS"d2"$CE") Disable "$RS"$WLANNM"$CE"${SPACESM}"$RS"|"$CE"   "$YS"  stop"$CE") Stop monitor"
 	else
-		echo -e ""$YS" 1"$CE") Enable $WLANN${SPACESN}"$YS"d1"$CE") Disable $WLANN${SPACESN}"$RS"|"$CE" "$YS" start"$CE") Monitor $MON_STATUS"
-		echo -e ""$YS" 2"$CE") Enable $WLANNM${SPACESM}"$YS"d2"$CE") Disable $WLANNM${SPACESM}"$RS"|"$CE"   "$YS"  stop"$CE") Stop monitor"
+		echo -e ""$YS" 1"$CE") Enable $WLANN${SPACESN}  "$YS"d1"$CE") Disable $WLANN${SPACESN}   "$RS"|"$CE" "$YS" start"$CE") Monitor $MON_STATUS"
+		echo -e ""$YS" 2"$CE") Enable $WLANNM${SPACESM} "$YS"d2"$CE") Disable $WLANNM${SPACESM}  "$RS"|"$CE"   "$YS"  stop"$CE") Stop monitor"
 	fi
-	echo -e ""$YS" 3"$CE") Spoof MAC address   "$YS"d3"$CE") Restore real MAC     "$RS"|"$CE" "$YS"update"$CE") Check for updates"
+	echo -e ""$YS" 3"$CE") Spoof MAC address   		"$YS"d3"$CE") Restore real MAC     "$RS"|"$CE" "$YS"update"$CE") Check for updates"
 	if [[ -f /root/torghost/torghost.py ]]
 	then
-	echo -e ""$YS" 4"$CE") Enable Tor routing  "$YS"d4"$CE") Disable Tor routing  "$RS"|"$CE" "$YS"errors"$CE") Fix some errors"
+	echo -e ""$YS" 4"$CE") Enable Tor routing  		"$YS"d4"$CE") Disable Tor routing  "$RS"|"$CE" "$YS"errors"$CE") Fix some errors"
 	else
-	echo -e ""$RS" 4"$CE") Enable Tor routing  "$RS"d4"$CE") Disable Tor routing  "$RS"|"$CE" "$YS"errors"$CE") Fix some errors"
+	echo -e ""$RS" 4"$CE") Enable Tor routing  		"$RS"d4"$CE") Disable Tor routing  "$RS"|"$CE" "$YS"errors"$CE") Fix some errors"
 	fi
 	if [[ -f /usr/bin/anonsurf ]]
 	then
-	echo -e ""$YS" 5"$CE") Enable AnonSurf     "$YS"d5"$CE") Disable AnonSurf     "$RS"|"$CE"     "$YS"ks"$CE") Keyboard shortcuts"
-	echo -e ""$YS" 6"$CE") AnonSurf status     "$YS"d6"$CE") Restart AnonSurf     "$RS"|"$CE"      "$YS"s"$CE") Settings menu"
+	echo -e ""$YS" 5"$CE") Enable AnonSurf     		"$YS"d5"$CE") Disable AnonSurf     "$RS"|"$CE"     "$YS"ks"$CE") Keyboard shortcuts"
+	echo -e ""$YS" 6"$CE") AnonSurf status     		"$YS"d6"$CE") Restart AnonSurf     "$RS"|"$CE"      "$YS"s"$CE") Settings menu"
 	else
-	echo -e ""$RS" 5"$CE") Enable AnonSurf     "$RS"d5"$CE") Disable AnonSurf     "$RS"|"$CE"     "$YS"ks"$CE") Keyboard shortcuts"
-	echo -e ""$RS" 6"$CE") AnonSurf status     "$RS"d6"$CE") Restart AnonSurf     "$RS"|"$CE"      "$YS"s"$CE") Settings menu"
+	echo -e ""$RS" 5"$CE") Enable AnonSurf     		"$RS"d5"$CE") Disable AnonSurf     "$RS"|"$CE"     "$YS"ks"$CE") Keyboard shortcuts"
+	echo -e ""$RS" 6"$CE") AnonSurf status    		"$RS"d6"$CE") Restart AnonSurf     "$RS"|"$CE"      "$YS"s"$CE") Settings menu"
 	fi
-	echo -e ""$YS" 7"$CE") Show public IP       "$YS" 7"$CE") Show public IP        "$RS"|"$CE" "$YS"   ni"$CE") New Tor identity"
-	echo -e ""$YS" 8"$CE") Show current MAC     "$YS"d8"$CE") Spoof random MAC      "$RS"|"$CE" "$YS"tools"$CE") Tools menu"
-	echo -e ""$YS" 9"$CE") TOOLS                "$YS"15"$CE") Spoof EMAIL           "$RS"|"$CE" "$YS"  22"$CE") Show bandwidth"
+	echo -e ""$YS" 7"$CE") Show public IP         "$YS" 7"$CE") Show public IP         "$RS"|"$CE" "$YS"   ni"$CE") New Tor identity"
+	echo -e ""$YS" 8"$CE") Show current MAC       "$YS"d8"$CE") Spoof random MAC       "$RS"|"$CE" "$YS"tools"$CE") Tools menu"
+	echo -e ""$YS" 9"$CE") TOOLS                  "$YS"15"$CE") Spoof EMAIL            "$RS"|"$CE" "$YS"  22"$CE") Show bandwidth"
 	if [[ -f /root/ngrok ]]
 	then
-		echo -e ""$YS"10"$CE") Handshake (hh)     "$YS"16"$CE") Ngrok port forward    "$RS"|"$CE" "$YS"  18"$CE") Auto-exploit browser"
+		echo -e ""$YS"10"$CE") Handshake (hh)     "$YS"16"$CE") Ngrok port forward     "$RS"|"$CE" "$YS"  18"$CE") Auto-exploit browser"
 	else
 		echo -e ""$YS"10"$CE") Handshake (hh)     "$RS"16"$CE") "$RS"Ngrok"$CE" port forward    "$RS"|"$CE" "$YS"  18"$CE") Auto-exploit browser"
 	fi
