@@ -391,7 +391,6 @@ function banner
 	echo -e "${_B}  ╚══════╝╚═╝  ╚═╝╚═╝  ╚═╝╚═════╝  ╚═════╝  ╚══╝╚══╝${CE}"
 	echo -e "${_C}        H A C K E R   —   v${VERSION}   —   Kali Linux${CE}"
 	echo -e ""
-
 	echo -e ""
 	echo -e "         ${_C}╔═══════════════════════════════════════════════════╗${CE}"
 	echo -e "         ${_B}║${_D}   ░▒▓  ${G3}S H A D O W   H A C K E R  ${_B}▓▒░   ${_B}║${CE}"
