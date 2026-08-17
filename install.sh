@@ -306,3 +306,7 @@ echo ""
 echo -e "  Type ${YS}shadow${CE} in any terminal to launch."
 echo -e "  Shortcuts: ${YS}hh${CE} (handshake) ${YS}dh${CE} (deauth) ${YS}mm${CE} (monitor) ${YS}wpa${CE} (scan)"
 echo ""
+echo -e "Open a NEW terminal and type 'shadow' to launch framework"
+sleep  4
+gnome-terminal -- shadow
+exit
