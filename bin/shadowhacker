@@ -398,7 +398,7 @@ function banner
 	echo -e "         ${_A}v${VERSION}  ${G2}─  by Ships2024${CE}"
 	echo -e ""
 	echo -e "  ${G2}Host:${CE} $CURRENT_HOST  ${G2}|${CE} "$YS"hostname"$CE") rename   ${G2}MAC:${CE} $CURRENT_MAC   ${G2}Public IP:${CE} $PUBLIC_IP"
-	echo -e "  ${G2}MAC Rand:${CE} $MACRAND_STATUS   ${G2}Tor:${CE} $TOR_STATUS   
+	echo -e "  ${G2}MAC Rand:${CE} $MACRAND_STATUS   ${G2}Tor:${CE} $TOR_STATUS"
 	echo -e "  ${G2}AI:${CE} PentestGPT $PGPT_STATUS   ${YS}pgpt${CE}) setup/launch   ${YS}?${CE}) context help   ${YS}ni${CE}) new Tor identity"
 	echo -e ""
 	if [[ "$WLANCHECKING" = "" ]]
