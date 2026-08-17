@@ -368,22 +368,10 @@ function pentestgpt_assist
 }
 function banner
 {
-	# Resize terminal: un-maximize then shrink to banner size
-	command -v xdotool &>/dev/null || apt-get install -y xdotool wmctrl &>/dev/null
-	if command -v xdotool &>/dev/null && [[ -n "$DISPLAY" ]]; then
-		local _WID; _WID=$(xdotool getactivewindow 2>/dev/null)
-		if [[ -n "$_WID" ]]; then
-			wmctrl -ir "$_WID" -b remove,maximized_vert,maximized_horz 2>/dev/null || true
-			sleep 0.15
-			xdotool windowsize --usehints "$_WID" 90 37 2>/dev/null
-			sleep 0.1
-		fi
-	else
-		printf '\033[9;0t' 2>/dev/null
-		sleep 0.1
-		printf '\033[8;37;90t' 2>/dev/null
-		sleep 0.1
-	fi
+	# Resize terminal window to fit banner (90 cols x 38 rows)
+	printf '\033[9;0t' 2>/dev/null   # restore from maximized if possible
+	printf '\033[8;38;90t' 2>/dev/null  # resize
+	sleep 0.1
 	check_wlans
 	# ─── Color-cycling hooded hacker ─────────────────────────────────────────
 	local G1="\e[2;32m"
@@ -4254,7 +4242,7 @@ function wifi_tools
 			# Install uv if missing (wifit3 requires it)
 			command -v uv &>/dev/null || pip3 install uv --break-system-packages &>/dev/null
 			if command -v uv &>/dev/null; then
-				uv sync 2>/dev/null; uv run wifit3
+				uv python pin 3.13 2>/dev/null; uv sync --python 3.13 2>/dev/null; uv run --python 3.13 wifit3
 			elif [[ -f wifit3-linux-x64 ]]; then
 				chmod +x wifit3-linux-x64 && ./wifit3-linux-x64
 			else
@@ -4264,7 +4252,7 @@ function wifi_tools
 			cd /root
 		else
 			echo -e "$TNI"; read I
-			[[ "$I" = "install" ]] && git clone https://github.com/derv82/wifit3.git /root/wifit3 && { command -v uv &>/dev/null || pip3 install uv --break-system-packages 2>/dev/null; (cd /root/wifit3 && uv sync 2>/dev/null); }
+			[[ "$I" = "install" ]] && git clone https://github.com/derv82/wifit3.git /root/wifit3 && { command -v uv &>/dev/null || pip3 install uv --break-system-packages 2>/dev/null; (cd /root/wifit3 && uv python pin 3.13 2>/dev/null && uv sync --python 3.13 2>/dev/null); }
 		fi
 	elif [[ "$APPP" = "back" || "$APPP" = "b" ]]
 	then
@@ -10452,7 +10440,7 @@ check_if_ks
 		echo -e "Installing Wifite3..."
 		git clone https://github.com/derv82/wifit3.git /root/wifit3 2>/dev/null
 		command -v uv &>/dev/null || pip3 install uv --break-system-packages 2>/dev/null
-		(cd /root/wifit3 && uv sync 2>/dev/null) || true
+		(cd /root/wifit3 && uv python pin 3.13 2>/dev/null && uv sync --python 3.13 2>/dev/null) || true
 	}
 	function install_wifite
 	{
