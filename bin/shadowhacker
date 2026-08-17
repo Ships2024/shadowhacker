@@ -367,7 +367,7 @@ function pentestgpt_assist
 }
 function banner
 {
-	printf '\033[8;38;95t' 2>/dev/null
+	printf '\033[8;37;90t' 2>/dev/null
 	check_wlans
 	# ─── Color-cycling hooded hacker ─────────────────────────────────────────
 	local G1="\e[2;32m"
@@ -7269,8 +7269,14 @@ function stop_monitor
 	else
 		airmon-ng stop $WLANNM &>/dev/null && echo -e ""$YS"Done"$CE"" && O2=1 || echo -e ""$RS"Error stoping monitor mode."$CE""
 	fi
-	echo -e "Starting network-manager service..."
-	service network-manager start && echo -e ""$YS"Done"$CE"" && O3=1 || echo -e ""$RS"Error starting network-manager service"$CE""
+	echo -e "Starting NetworkManager service..."
+	if systemctl restart NetworkManager 2>/dev/null; then
+		echo -e ""$YS"Done"$CE"" && O3=1
+	elif service network-manager restart 2>/dev/null; then
+		echo -e ""$YS"Done"$CE"" && O3=1
+	else
+		echo -e ""$RS"Could not restart NetworkManager"$CE""
+	fi
 }
 function spoof_email
 {
@@ -9976,7 +9982,7 @@ function main_options
 		service postgresql stop && echo -e ""$YS"Done"$CE"" || echo -e ""$RS"Error"$CE""
 	elif [[ "$YORNAA" = "nstart" ]]
 	then
-		service network-manager start && echo -e ""$YS"Done"$CE"" || echo -e ""$RS"Error"$CE""
+		systemctl restart NetworkManager 2>/dev/null || service network-manager restart 2>/dev/null && echo -e ""$YS"Done"$CE"" || echo -e ""$RS"Error"$CE""
 	elif [[ "$YORNAA" = "nstop" ]]
 	then
 		service network-manager stop && echo -e ""$YS"Done"$CE"" || echo -e ""$RS"Error"$CE""
@@ -10268,16 +10274,22 @@ function main_options
 	elif [[ "$YORNAA" = "ni" ]]
 	then
 		echo -e "Requesting new Tor identity..."
+		NI_OK=0
 		if printf 'AUTHENTICATE ""\r\nSIGNAL NEWNYM\r\nQUIT\r\n' | nc -w 2 127.0.0.1 9051 2>/dev/null | grep -q '250'; then
+			NI_OK=1; sleep 2
+		elif kill -HUP $(pidof tor 2>/dev/null) 2>/dev/null; then
+			NI_OK=1; sleep 3
+		elif [[ -f /root/torghost/torghost.py ]]; then
+			(cd /root/torghost && python3 torghost.py -x 2>/dev/null; sleep 2; python3 torghost.py -s 2>/dev/null) && NI_OK=1
+			sleep 4
+		fi
+		if [[ "$NI_OK" = "1" ]]; then
 			PUBLIC_IP=$(curl -s --max-time 5 https://api.ipify.org 2>/dev/null || echo "N/A")
 			echo -e "${YS}New identity acquired. Public IP: $PUBLIC_IP${CE}"
-			sleep 2
-		elif [[ -f /root/torghost/torghost.py ]]; then
-			(cd /root/torghost && python3 torghost.py -x 2>/dev/null; sleep 2; python3 torghost.py -s 2>/dev/null) &
-			echo -e "${YS}Restarting TorGhost for new identity...${CE}"; sleep 4
 		else
-			echo -e "${RS}Failed - enable Tor routing first (option 4)${CE}"; sleep 2
+			echo -e "${RS}Failed — enable Tor routing first (option 4)${CE}"
 		fi
+		sleep 2
 	elif [[ "$YORNAA" = "eternalblue" ]]
 	then
 		if [[ -d /root/wifiphisher ]]
