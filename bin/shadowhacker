@@ -368,6 +368,7 @@ function pentestgpt_assist
 function banner
 {
 	printf '\033[8;37;90t' 2>/dev/null
+	sleep 0.1
 	check_wlans
 	# ─── Color-cycling hooded hacker ─────────────────────────────────────────
 	local G1="\e[2;32m"
@@ -10095,7 +10096,9 @@ function main_options
 			apt-get install -y iptables-persistent &>/dev/null || true
 			iptables-save > /etc/iptables/rules.v4 2>/dev/null || true
 			(crontab -l 2>/dev/null | grep -v "shadowhacker-torghost"; echo "# shadowhacker-torghost"; echo "@reboot sleep 20 && cd /root/torghost && python3 torghost.py -s &>/dev/null") | crontab -
-			echo -e "Done. Tor routing will restart on reboot."
+			# New Tor identity on every reboot (after Tor has started)
+			(crontab -l 2>/dev/null | grep -v "shadowhacker-newid"; echo "# shadowhacker-newid"; echo "@reboot sleep 45 && { printf \'AUTHENTICATE \"\"\\r\\nSIGNAL NEWNYM\\r\\nQUIT\\r\\n\' | nc -w 2 127.0.0.1 9051 2>/dev/null | grep -q \'250\' || kill -HUP \$(pidof tor 2>/dev/null) 2>/dev/null || systemctl restart tor 2>/dev/null; } &>/dev/null") | crontab -
+			echo -e "Done. Tor routing will restart on reboot with a fresh identity."
 		fi
 	elif [[ "$YORNAA" = "d4" ]]
 	then
@@ -10112,7 +10115,7 @@ function main_options
 			(cd /root/torghost && python3 torghost.py -x)
 			systemctl disable tor &>/dev/null
 			# Remove reboot persistence
-			(crontab -l 2>/dev/null | grep -v "shadowhacker-torghost" | grep -v "torghost.py") | crontab -
+			(crontab -l 2>/dev/null | grep -v "shadowhacker-torghost" | grep -v "torghost.py" | grep -v "shadowhacker-newid") | crontab -
 			iptables -F 2>/dev/null; iptables -X 2>/dev/null
 			iptables-save > /etc/iptables/rules.v4 2>/dev/null || true
 			echo -e "Done. Tor routing disabled and removed from startup."
@@ -10275,16 +10278,23 @@ function main_options
 	then
 		echo -e "Requesting new Tor identity..."
 		NI_OK=0
+		# Method 1: Tor control port NEWNYM (fastest, no service restart)
 		if printf 'AUTHENTICATE ""\r\nSIGNAL NEWNYM\r\nQUIT\r\n' | nc -w 2 127.0.0.1 9051 2>/dev/null | grep -q '250'; then
 			NI_OK=1; sleep 2
+		# Method 2: SIGHUP to tor daemon (new circuit)
 		elif kill -HUP $(pidof tor 2>/dev/null) 2>/dev/null; then
 			NI_OK=1; sleep 3
+		# Method 3: restart tor service (guaranteed new exit node)
+		elif systemctl restart tor 2>/dev/null || service tor restart 2>/dev/null; then
+			NI_OK=1; sleep 5
+		# Method 4: torghost restart
 		elif [[ -f /root/torghost/torghost.py ]]; then
-			(cd /root/torghost && python3 torghost.py -x 2>/dev/null; sleep 2; python3 torghost.py -s 2>/dev/null) && NI_OK=1
-			sleep 4
+			(cd /root/torghost && python3 torghost.py -r 2>/dev/null) && NI_OK=1
+			sleep 5
 		fi
 		if [[ "$NI_OK" = "1" ]]; then
-			PUBLIC_IP=$(curl -s --max-time 5 https://api.ipify.org 2>/dev/null || echo "N/A")
+			PUBLIC_IP=$(curl -s --max-time 8 --socks5 127.0.0.1:9050 https://api.ipify.org 2>/dev/null \
+				|| curl -s --max-time 8 https://api.ipify.org 2>/dev/null || echo "N/A")
 			echo -e "${YS}New identity acquired. Public IP: $PUBLIC_IP${CE}"
 		else
 			echo -e "${RS}Failed — enable Tor routing first (option 4)${CE}"
