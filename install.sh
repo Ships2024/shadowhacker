@@ -311,7 +311,7 @@ echo -e "  ${YS}Launching Shadow Hacker in 4 seconds...${CE}"
 sleep 4
 # Open a new gnome-terminal resized to the banner dimensions and launch shadow
 # Launch shadow in a new terminal at the correct size
-gnome-terminal --geometry=90x38 -- bash -c 'shadow; exec bash' 2>/dev/null &
+gnome-terminal --geometry 90x38+0+0 -e 'bash -c "shadow; exec bash"' 2>/dev/null &
 sleep 0.5
 # Close this installer terminal
 kill $PPID 2>/dev/null || true
