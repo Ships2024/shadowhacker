@@ -293,9 +293,10 @@ fi
 progress "Installing Wifite3..."
 if [[ ! -d /root/wifit3 ]]; then
   git clone -q https://github.com/derv82/wifit3.git /root/wifit3 2>/dev/null
-  [[ -f /root/wifit3/requirements.txt ]] && \
-    pip3 install -q -r /root/wifit3/requirements.txt --break-system-packages 2>/dev/null || true
 fi
+# wifit3 uses uv — install and sync deps
+command -v uv &>/dev/null || pip3 install -q uv --break-system-packages 2>/dev/null
+(cd /root/wifit3 && uv sync -q 2>/dev/null) || true
 
 # ── Done ──────────────────────────────────────────────────────────────────────
 progress "Finalising..."
@@ -309,7 +310,17 @@ echo ""
 echo -e "  ${YS}Launching Shadow Hacker in 4 seconds...${CE}"
 sleep 4
 # Open a new gnome-terminal resized to the banner dimensions and launch shadow
-gnome-terminal --geometry=90x37 -- bash -c 'shadow; exec bash' 2>/dev/null &
-sleep 0.5
+# Launch new terminal — let shadow's banner resize handle the dimensions
+gnome-terminal -- bash -c 'shadow; exec bash' 2>/dev/null &
+sleep 1.5
+# Find the new gnome-terminal window and un-maximize + resize it
+NEW_WID=$(xdotool search --onlyvisible --classname "gnome-terminal-server" 2>/dev/null | tail -1)
+[[ -z "$NEW_WID" ]] && NEW_WID=$(xdotool search --onlyvisible --class "gnome-terminal" 2>/dev/null | tail -1)
+if [[ -n "$NEW_WID" ]]; then
+  wmctrl -ir "$NEW_WID" -b remove,maximized_vert,maximized_horz 2>/dev/null
+  sleep 0.2
+  xdotool windowsize --usehints "$NEW_WID" 90 37 2>/dev/null
+fi
+sleep 0.3
 # Close this installer terminal
-wmctrl -c :ACTIVE: 2>/dev/null || kill $(ps -o ppid= -p $PPID 2>/dev/null) 2>/dev/null || true
+xdotool getactivewindow windowclose 2>/dev/null || wmctrl -c :ACTIVE: 2>/dev/null || kill -9 $PPID 2>/dev/null || true

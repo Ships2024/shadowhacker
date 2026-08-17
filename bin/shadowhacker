@@ -443,7 +443,7 @@ function banner
 	echo -e ""$RS" 6"$CE") AnonSurf status     "$RS"d6"$CE") Restart AnonSurf    "$RS"|"$CE" "$YS"     s"$CE") Settings menu"
 	fi
 	echo -e ""$YS" 7"$CE") Show public IP      "$YS"                        "$RS"|"$CE" "$YS"    ni"$CE") New Tor identity"
-	echo -e ""$YS" 8"$CE") Show current MAC    "$YS"d8"$CE") Spoof random MAC    "$RS"|"$CE" "$YS" tools"$CE") Tools menu"
+	echo -e ""$YS" 8"$CE") Show current MAC    "$YS"  "$CE")                     "$RS"|"$CE" "$YS" tools"$CE") Tools menu"
 	echo -e ""$YS" 9"$CE") TOOLS               "$YS"15"$CE") Spoof EMAIL         "$RS"|"$CE" "$YS"    22"$CE") Show bandwidth"
 	if [[ -f /root/ngrok ]]
 	then
@@ -4250,10 +4250,21 @@ function wifi_tools
 	elif [[ "$APPP" = "3" ]]
 	then
 		if [[ -d /root/wifit3 ]]; then
-			cd /root/wifit3 && (python3 wifit3.py 2>/dev/null || python3 wifite.py 2>/dev/null || echo -e "${RS}Could not find wifit3 entry point${CE}"); cd /root
+			cd /root/wifit3
+			# Install uv if missing (wifit3 requires it)
+			command -v uv &>/dev/null || pip3 install uv --break-system-packages &>/dev/null
+			if command -v uv &>/dev/null; then
+				uv sync 2>/dev/null; uv run wifit3
+			elif [[ -f wifit3-linux-x64 ]]; then
+				chmod +x wifit3-linux-x64 && ./wifit3-linux-x64
+			else
+				echo -e "${RS}Cannot run wifit3 — install uv: pip3 install uv --break-system-packages${CE}"
+				sleep 3
+			fi
+			cd /root
 		else
 			echo -e "$TNI"; read I
-			[[ "$I" = "install" ]] && git clone https://github.com/derv82/wifit3.git /root/wifit3 && pip3 install -r /root/wifit3/requirements.txt --break-system-packages 2>/dev/null
+			[[ "$I" = "install" ]] && git clone https://github.com/derv82/wifit3.git /root/wifit3 && { command -v uv &>/dev/null || pip3 install uv --break-system-packages 2>/dev/null; (cd /root/wifit3 && uv sync 2>/dev/null); }
 		fi
 	elif [[ "$APPP" = "back" || "$APPP" = "b" ]]
 	then
@@ -10093,21 +10104,6 @@ function main_options
 		macchanger -p $MYINT
 		ifconfig $MYINT up
 		echo -e "Done."
-	elif [[ "$YORNAA" = "d8" ]]
-	then
-		interface_selection
-		clear
-		if [[ "$MYINT" = "OFF" ]]; then
-			echo -e "${RS}No interface selected${CE}"; sleep 2
-		else
-			echo -e "Spoofing random MAC on $MYINT..."
-			ip link set "$MYINT" down 2>/dev/null || ifconfig "$MYINT" down 2>/dev/null
-			macchanger -r "$MYINT"
-			ip link set "$MYINT" up 2>/dev/null || ifconfig "$MYINT" up 2>/dev/null
-			systemctl restart NetworkManager 2>/dev/null
-			echo -e "${YS}Done. New MAC: $(macchanger -s $MYINT 2>/dev/null | grep Current | awk '{print $3}')${CE}"
-			sleep 2
-		fi
 	elif [[ "$YORNAA" = "4" ]]
 	then
 		if [[ ! -f "/root/torghost/torghost.py" ]]
@@ -10455,7 +10451,8 @@ check_if_ks
 	{
 		echo -e "Installing Wifite3..."
 		git clone https://github.com/derv82/wifit3.git /root/wifit3 2>/dev/null
-		[[ -f /root/wifit3/requirements.txt ]] && pip3 install -r /root/wifit3/requirements.txt --break-system-packages 2>/dev/null || true
+		command -v uv &>/dev/null || pip3 install uv --break-system-packages 2>/dev/null
+		(cd /root/wifit3 && uv sync 2>/dev/null) || true
 	}
 	function install_wifite
 	{
