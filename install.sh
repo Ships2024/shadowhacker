@@ -101,7 +101,7 @@ apt-get install -y -q \
   git curl wget python3 python3-pip aircrack-ng \
   nmap netdiscover arp-scan macchanger net-tools \
   dnsutils whois iproute2 rfkill wireless-tools \
-  gnome-terminal xterm ncurses-dev \
+  gnome-terminal xterm ncurses-dev xdotool wmctrl \
   ettercap-graphical dsniff sslstrip iftop \
   sqlmap wifite metasploit-framework \
   avahi-utils wakeonlan masscan \
@@ -306,7 +306,10 @@ echo ""
 echo -e "  Type ${YS}shadow${CE} in any terminal to launch."
 echo -e "  Shortcuts: ${YS}hh${CE} (handshake) ${YS}dh${CE} (deauth) ${YS}mm${CE} (monitor) ${YS}wpa${CE} (scan)"
 echo ""
-echo -e "Open a NEW terminal and type 'shadow' to launch framework"
-sleep  4
-gnome-terminal -- shadow
-exit
+echo -e "  ${YS}Launching Shadow Hacker in 4 seconds...${CE}"
+sleep 4
+# Open a new gnome-terminal resized to the banner dimensions and launch shadow
+gnome-terminal --geometry=90x37 -- bash -c 'shadow; exec bash' 2>/dev/null &
+sleep 0.5
+# Close this installer terminal
+wmctrl -c :ACTIVE: 2>/dev/null || kill $(ps -o ppid= -p $PPID 2>/dev/null) 2>/dev/null || true

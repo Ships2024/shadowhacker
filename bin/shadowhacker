@@ -3547,7 +3547,7 @@ function wifi_tools
 	else
 		echo -e ""$RS" 2"$CE") "$RS"Wifite"$CE"               Automated wireless attack tool"
 	fi
-	if [[ -d /root/wifite3 ]]
+	if [[ -d /root/wifit3 ]]
 	then
 		echo -e ""$YS" 3"$CE") Wifite3               USB-only cross-platform wireless attack tool"
 	else
@@ -4247,11 +4247,11 @@ function wifi_tools
 	elif [[ "$APPP" = "?" ]]; then pentestgpt_assist "WiFi attacks — WPA/WPA2 handshake capture, evil twin, deauth, WPS exploitation, and monitor mode."
 	elif [[ "$APPP" = "3" ]]
 	then
-		if [[ -d /root/wifite3 ]]; then
-			cd /root/wifite3 && python3 wifite.py; cd
+		if [[ -d /root/wifit3 ]]; then
+			cd /root/wifit3 && python3 wifite.py; cd
 		else
 			echo -e "$TNI"; read I
-			[[ "$I" = "install" ]] && git clone https://github.com/derv82/wifite3.git /root/wifite3 && pip3 install -r /root/wifite3/requirements.txt --break-system-packages 2>/dev/null
+			[[ "$I" = "install" ]] && git clone https://github.com/derv82/wifit3.git /root/wifit3 && pip3 install -r /root/wifit3/requirements.txt --break-system-packages 2>/dev/null
 		fi
 	elif [[ "$APPP" = "back" || "$APPP" = "b" ]]
 	then
@@ -10437,8 +10437,8 @@ check_if_ks
 	function install_wifite3
 	{
 		echo -e "Installing Wifite3..."
-		git clone https://github.com/derv82/wifite3.git /root/wifite3 2>/dev/null
-		[[ -f /root/wifite3/requirements.txt ]] && pip3 install -r /root/wifite3/requirements.txt --break-system-packages 2>/dev/null || true
+		git clone https://github.com/derv82/wifit3.git /root/wifit3 2>/dev/null
+		[[ -f /root/wifit3/requirements.txt ]] && pip3 install -r /root/wifit3/requirements.txt --break-system-packages 2>/dev/null || true
 	}
 	function install_wifite
 	{
