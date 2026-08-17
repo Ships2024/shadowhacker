@@ -589,19 +589,21 @@ function change_mac
 	case "$MACOPT" in
 		1)
 			echo -e "Spoofing MAC of $MYINT to a random address..."
-			ifconfig $MYINT down
-			macchanger -r $MYINT
-			ifconfig $MYINT up
-			echo -e "Done."
+			ip link set "$MYINT" down 2>/dev/null || ifconfig "$MYINT" down 2>/dev/null
+			macchanger -r "$MYINT"
+			ip link set "$MYINT" up 2>/dev/null || ifconfig "$MYINT" up 2>/dev/null
+			systemctl restart NetworkManager 2>/dev/null
+			echo -e "${YS}Done. New MAC: $(macchanger -s $MYINT 2>/dev/null | grep Current | awk '{print $3}')${CE}"
 			;;
 		2)
-			echo -e "Enter the MAC address to use:"
+			echo -e "Enter the MAC address to use (format: xx:xx:xx:xx:xx:xx):"
 			read -e SMAC
 			echo -e "Setting MAC of $MYINT to $SMAC..."
-			ifconfig $MYINT down
-			macchanger -m $SMAC $MYINT
-			ifconfig $MYINT up
-			echo -e "Done."
+			ip link set "$MYINT" down 2>/dev/null || ifconfig "$MYINT" down 2>/dev/null
+			macchanger -m "$SMAC" "$MYINT"
+			ip link set "$MYINT" up 2>/dev/null || ifconfig "$MYINT" up 2>/dev/null
+			systemctl restart NetworkManager 2>/dev/null
+			echo -e "${YS}Done.${CE}"
 			;;
 		3) start_mac_randomizer "$MYINT" 3 ;;
 		4) start_mac_randomizer "$MYINT" 5 ;;
@@ -4248,7 +4250,7 @@ function wifi_tools
 	elif [[ "$APPP" = "3" ]]
 	then
 		if [[ -d /root/wifit3 ]]; then
-			cd /root/wifit3 && python3 wifite.py; cd
+			cd /root/wifit3 && (python3 wifit3.py 2>/dev/null || python3 wifite.py 2>/dev/null || echo -e "${RS}Could not find wifit3 entry point${CE}"); cd /root
 		else
 			echo -e "$TNI"; read I
 			[[ "$I" = "install" ]] && git clone https://github.com/derv82/wifit3.git /root/wifit3 && pip3 install -r /root/wifit3/requirements.txt --break-system-packages 2>/dev/null
@@ -10091,6 +10093,21 @@ function main_options
 		macchanger -p $MYINT
 		ifconfig $MYINT up
 		echo -e "Done."
+	elif [[ "$YORNAA" = "d8" ]]
+	then
+		interface_selection
+		clear
+		if [[ "$MYINT" = "OFF" ]]; then
+			echo -e "${RS}No interface selected${CE}"; sleep 2
+		else
+			echo -e "Spoofing random MAC on $MYINT..."
+			ip link set "$MYINT" down 2>/dev/null || ifconfig "$MYINT" down 2>/dev/null
+			macchanger -r "$MYINT"
+			ip link set "$MYINT" up 2>/dev/null || ifconfig "$MYINT" up 2>/dev/null
+			systemctl restart NetworkManager 2>/dev/null
+			echo -e "${YS}Done. New MAC: $(macchanger -s $MYINT 2>/dev/null | grep Current | awk '{print $3}')${CE}"
+			sleep 2
+		fi
 	elif [[ "$YORNAA" = "4" ]]
 	then
 		if [[ ! -f "/root/torghost/torghost.py" ]]
