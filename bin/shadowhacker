@@ -311,14 +311,15 @@ function check_wlans
 	fi
 	# Hostname
 	CURRENT_HOST=$(hostname 2>/dev/null || echo "unknown")
-	# TorGhost / Tor routing status
+	# TorGhost / Tor routing status + PUBLIC_IP (via socks5 when Tor active)
 	if systemctl is-active --quiet tor 2>/dev/null; then
 		TOR_STATUS="\e[1;32m[ACTIVE]\e[0m"
+		PUBLIC_IP=$(curl -s --max-time 5 --socks5 127.0.0.1:9050 https://api.ipify.org 2>/dev/null \
+			|| curl -s --max-time 4 https://api.ipify.org 2>/dev/null || echo "N/A")
 	else
 		TOR_STATUS="\e[1;31m[OFF]\e[0m"
+		PUBLIC_IP=$(curl -s --max-time 4 https://api.ipify.org 2>/dev/null || echo "N/A")
 	fi
-	# PentestGPT status
-	PUBLIC_IP=$(curl -s --max-time 3 https://api.ipify.org 2>/dev/null || echo "N/A")
 	if python3 -c "import pentestgpt" &>/dev/null 2>&1 && [[ -f "$LPATH/settings/openai_key.txt" ]]; then
 		PGPT_STATUS="\e[1;32m[ACTIVE]\e[0m"
 	elif python3 -c "import pentestgpt" &>/dev/null 2>&1; then
@@ -367,10 +368,22 @@ function pentestgpt_assist
 }
 function banner
 {
-	printf '\033[9;0t' 2>/dev/null
-	sleep 0.1
-	printf '\033[8;37;90t' 2>/dev/null
-	sleep 0.1
+	# Resize terminal: un-maximize then shrink to banner size
+	command -v xdotool &>/dev/null || apt-get install -y xdotool wmctrl &>/dev/null
+	if command -v xdotool &>/dev/null && [[ -n "$DISPLAY" ]]; then
+		local _WID; _WID=$(xdotool getactivewindow 2>/dev/null)
+		if [[ -n "$_WID" ]]; then
+			wmctrl -ir "$_WID" -b remove,maximized_vert,maximized_horz 2>/dev/null || true
+			sleep 0.15
+			xdotool windowsize --usehints "$_WID" 90 37 2>/dev/null
+			sleep 0.1
+		fi
+	else
+		printf '\033[9;0t' 2>/dev/null
+		sleep 0.1
+		printf '\033[8;37;90t' 2>/dev/null
+		sleep 0.1
+	fi
 	check_wlans
 	# ─── Color-cycling hooded hacker ─────────────────────────────────────────
 	local G1="\e[2;32m"
@@ -7123,16 +7136,14 @@ function public_ip
 	if [[ "$CHECKMON" = "" ]]
 	then
 		clear
-		PUBLICIP=$(curl -s ipinfo.io/ip)
-		if [[ "$PUBLICIP" = "" ]]
-		then
-			PUBLICIP=$(curl -s checkip.dyndns.org | sed -e 's/.*Current IP Address: //' -e 's/<.*$//')
-			if [[ "$PUBLICIP" = "" ]]
-			then
-				clear
-				PUBLICIP="Connection error."
-			fi
+		# Try Tor socks5 first if Tor is active
+		if systemctl is-active --quiet tor 2>/dev/null; then
+			PUBLICIP=$(curl -s --max-time 6 --socks5 127.0.0.1:9050 https://api.ipify.org 2>/dev/null)
 		fi
+		[[ -z "$PUBLICIP" ]] && PUBLICIP=$(curl -s --max-time 5 https://api.ipify.org 2>/dev/null)
+		[[ -z "$PUBLICIP" ]] && PUBLICIP=$(curl -s --max-time 5 checkip.dyndns.org 2>/dev/null | sed -e 's/.*Current IP Address: //' -e 's/<.*$//')
+		[[ -z "$PUBLICIP" ]] && PUBLICIP="Connection error."
+		PUBLIC_IP="$PUBLICIP"
 		echo "Your public IP is: "$PUBLICIP""
 		#~ curl -s checkip.dyndns.org | sed -e 's/.*Current IP Address: //' -e 's/<.*$//'
 	else
@@ -10120,7 +10131,17 @@ function main_options
 			(crontab -l 2>/dev/null | grep -v "shadowhacker-torghost" | grep -v "torghost.py" | grep -v "shadowhacker-newid") | crontab -
 			iptables -F 2>/dev/null; iptables -X 2>/dev/null
 			iptables-save > /etc/iptables/rules.v4 2>/dev/null || true
-			echo -e "Done. Tor routing disabled and removed from startup."
+			echo -e "Tor routing disabled. Randomizing MAC for anonymity..."
+			# Randomize MAC on primary interface to change identity
+			PRIMIFACE=$(ip route 2>/dev/null | grep default | awk '{print $5}' | head -1)
+			if [[ -n "$PRIMIFACE" ]]; then
+				ip link set "$PRIMIFACE" down 2>/dev/null
+				macchanger -r "$PRIMIFACE" 2>/dev/null
+				ip link set "$PRIMIFACE" up 2>/dev/null
+				systemctl restart NetworkManager 2>/dev/null
+			fi
+			PUBLIC_IP=$(curl -s --max-time 6 https://api.ipify.org 2>/dev/null || echo "N/A")
+			echo -e "Done. New public IP: $PUBLIC_IP"
 		fi
 	elif [[ "$YORNAA" = "5" ]]
 	then
@@ -10728,7 +10749,7 @@ check_if_ks
 	function install_torghost
 	{
 		echo -e "Installing TorGhost (Tor traffic router)..."
-		apt-get install -y tor iptables python3 python3-pip 2>/dev/null
+		apt-get install -y tor iptables python3 python3-pip xdotool wmctrl 2>/dev/null
 		[[ -d /root/torghost ]] && rm -rf /root/torghost
 		git clone https://github.com/INTELEON404/torghost.git /root/torghost
 		[[ -f /root/torghost/requirements.txt ]] && 			pip3 install -r /root/torghost/requirements.txt --break-system-packages 2>/dev/null || true
