@@ -32,11 +32,9 @@ echo ""
 echo -e "  Press any key to begin installation..."
 read -n 1
 clear
-apt-get update -y
-apt-get -y install gnome-terminal
-clear
+
 # ── Progress bar ──────────────────────────────────────────────────────────────
-TOTAL_STEPS=33
+TOTAL_STEPS=35
 CURRENT_STEP=0
 
 progress() {
@@ -93,60 +91,67 @@ ln -sf /root/shadowhacker/scripts/wpa-scan         /usr/local/bin/wpa
 
 mkdir -p /root/handshakes /root/wordlists
 
-# ── APT update ────────────────────────────────────────────────────────────────
+# ── APT update (lists only — no upgrade) ─────────────────────────────────────
 progress "Updating package lists..."
-apt-get update -y -q 2>/dev/null
+apt-get update -q 2>/dev/null
+
+# ── Helper: only install packages not already present ─────────────────────────
+apt_install_missing() {
+  local missing=()
+  for pkg in "$@"; do
+    dpkg -s "$pkg" &>/dev/null 2>&1 || missing+=("$pkg")
+  done
+  [[ ${#missing[@]} -gt 0 ]] && apt-get install -y -q "${missing[@]}" 2>/dev/null || true
+}
 
 # ── Core dependencies ─────────────────────────────────────────────────────────
-progress "Installing core dependencies..."
-apt-get install -y -q \
+progress "Checking core dependencies..."
+apt_install_missing \
   git curl wget python3 python3-pip aircrack-ng \
   nmap netdiscover arp-scan macchanger net-tools \
   dnsutils whois iproute2 rfkill wireless-tools \
   gnome-terminal xterm ncurses-dev xdotool wmctrl \
   ettercap-graphical dsniff sslstrip iftop \
   sqlmap wifite metasploit-framework \
-  avahi-utils wakeonlan masscan \
-  2>/dev/null
+  avahi-utils wakeonlan masscan
 
 # ── MDK3/MDK4 ─────────────────────────────────────────────────────────────────
-progress "Installing mdk3/mdk4..."
-apt-get install -y -q mdk3 mdk4 2>/dev/null || true
+progress "Checking mdk3/mdk4..."
+apt_install_missing mdk3 mdk4
 
 # ── Bluetooth ─────────────────────────────────────────────────────────────────
-progress "Installing Bluetooth tools..."
-apt-get install -y -q \
+progress "Checking Bluetooth tools..."
+apt_install_missing \
   bluez bluez-tools btscanner bluelog spooftooph \
-  bluetooth python3-tk rfkill blueranger 2>/dev/null || true
+  bluetooth python3-tk blueranger
 systemctl enable --now bluetooth 2>/dev/null || true
 rfkill unblock bluetooth 2>/dev/null || true
 pip3 install bleak btlejack --break-system-packages 2>/dev/null || true
 
 # ── Python libs ───────────────────────────────────────────────────────────────
-progress "Installing Python libraries..."
+progress "Checking Python libraries..."
 pip3 install requests scapy termcolor netifaces websocket-client \
   --break-system-packages 2>/dev/null || true
 
 # ── OpenVAS ───────────────────────────────────────────────────────────────────
-progress "Installing OpenVAS/GVM..."
-apt-get install -y -q gvm 2>/dev/null || true
+progress "Checking OpenVAS/GVM..."
+apt_install_missing gvm
 
 # ── Kismet + GPS ──────────────────────────────────────────────────────────────
-progress "Installing Kismet + GPS tools..."
-apt-get install -y -q kismet gpsd gpsd-clients jq 2>/dev/null || true
+progress "Checking Kismet + GPS tools..."
+apt_install_missing kismet gpsd gpsd-clients jq
 
 # ── Web tools ─────────────────────────────────────────────────────────────────
-progress "Installing web pentest tools..."
-apt-get install -y -q \
+progress "Checking web pentest tools..."
+apt_install_missing \
   wfuzz gobuster ffuf nikto hydra hashcat \
-  hping3 recon-ng 2>/dev/null || true
+  hping3 recon-ng
 
 # ── Network tools ─────────────────────────────────────────────────────────────
-progress "Installing network attack tools..."
-apt-get install -y -q \
+progress "Checking network attack tools..."
+apt_install_missing \
   bettercap hcxdumptool hcxtools \
-  crackmapexec mitm6 responder \
-  2>/dev/null || true
+  crackmapexec mitm6 responder
 
 # ── RustScan ─────────────────────────────────────────────────────────────────
 progress "Installing RustScan..."
@@ -187,7 +192,7 @@ fi
 
 # ── TorGhost ──────────────────────────────────────────────────────────────────
 progress "Installing TorGhost..."
-apt-get install -y -q tor iptables 2>/dev/null || true
+apt_install_missing tor iptables
 if [[ ! -d /root/torghost ]]; then
   git clone -q https://github.com/INTELEON404/torghost.git /root/torghost 2>/dev/null
   [[ -f /root/torghost/requirements.txt ]] && \
@@ -301,6 +306,11 @@ command -v uv &>/dev/null || pip3 install -q uv --break-system-packages 2>/dev/n
 (cd /root/wifit3 && uv python pin 3.13 2>/dev/null && uv sync -q --python 3.13 2>/dev/null) || true
 
 # ── Done ──────────────────────────────────────────────────────────────────────
+# ── Clean up unneeded packages ────────────────────────────────────────────────
+progress "Cleaning up..."
+apt-get autoremove -y -q 2>/dev/null || true
+apt-get clean -q 2>/dev/null || true
+
 progress "Configuring terminal profile..."
 # Set gnome-terminal profile to 90x38 for shadow
 _PROF=$(gsettings get org.gnome.Terminal.ProfilesList default 2>/dev/null | tr -d "' ")
@@ -321,26 +331,21 @@ echo ""
 echo -e "  ${YS}Launching Shadow Hacker in 4 seconds...${CE}"
 sleep 4
 # Open a new gnome-terminal resized to the banner dimensions and launch shadow
-# Set gnome-terminal default profile size before launching
+# Kill gnome-terminal server so it re-reads profile on next launch
+pkill -f gnome-terminal-server 2>/dev/null; sleep 0.5
+
+# Set profile size to 90x38 for shadow
 _PROF=$(gsettings get org.gnome.Terminal.ProfilesList default 2>/dev/null | tr -d "' ")
 if [[ -n "$_PROF" ]]; then
   _PPATH="org.gnome.Terminal.Legacy.Profile:/org/gnome/terminal/legacy/profiles:/:${_PROF}/"
-  _OLD_COLS=$(gsettings get $_PPATH default-size-columns 2>/dev/null)
-  _OLD_ROWS=$(gsettings get $_PPATH default-size-rows 2>/dev/null)
   gsettings set $_PPATH default-size-columns 90 2>/dev/null
   gsettings set $_PPATH default-size-rows 38 2>/dev/null
 fi
 
-# Launch shadow in a new terminal
+# Launch shadow — the banner will also resize the window via xdotool
 gnome-terminal -- bash -c 'shadow; exec bash' 2>/dev/null &
-sleep 1
-
-# Restore profile size
-if [[ -n "$_PROF" && -n "$_OLD_COLS" ]]; then
-  gsettings set $_PPATH default-size-columns $_OLD_COLS 2>/dev/null
-  gsettings set $_PPATH default-size-rows $_OLD_ROWS 2>/dev/null
-fi
 
 # Close this installer terminal
+sleep 0.5
 kill $PPID 2>/dev/null || true
 exit 0
