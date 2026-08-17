@@ -368,17 +368,28 @@ function pentestgpt_assist
 }
 function banner
 {
-	# Resize terminal to fit banner using gsettings (reliable on modern Kali)
-	if [[ -n "$DISPLAY" ]]; then
-		_PROF=$(gsettings get org.gnome.Terminal.ProfilesList default 2>/dev/null | tr -d "' ")
-		if [[ -n "$_PROF" ]]; then
-			_PPATH="org.gnome.Terminal.Legacy.Profile:/org/gnome/terminal/legacy/profiles:/:${_PROF}/"
-			gsettings set $_PPATH default-size-columns 90 2>/dev/null
-			gsettings set $_PPATH default-size-rows 38 2>/dev/null
+	# Resize the current terminal window to fit the banner (90x38)
+	if command -v xdotool &>/dev/null && [[ -n "$DISPLAY" ]]; then
+		_WID=$(xdotool getwindowfocus 2>/dev/null)
+		if [[ -n "$_WID" ]]; then
+			# Step 1: exit fullscreen if active
+			wmctrl -ir "$_WID" -b remove,fullscreen 2>/dev/null
+			sleep 0.4
+			# Step 2: un-maximize
+			wmctrl -ir "$_WID" -b remove,maximized_vert,maximized_horz 2>/dev/null
+			sleep 0.4
+			# Step 3: resize using terminal character hints
+			xdotool windowsize --usehints "$_WID" 90 38 2>/dev/null
+			sleep 0.1
 		fi
-		# Also send escape sequence as fallback
+	elif [[ -n "$DISPLAY" ]]; then
+		# Fallback: escape sequence resize
+		printf '\033[9;0t' 2>/dev/null
+		sleep 0.1
 		printf '\033[8;38;90t' 2>/dev/null
+		sleep 0.1
 	fi
+	# Ensure correct text-wrap dimensions regardless of window size
 	stty cols 90 rows 38 2>/dev/null
 	check_wlans
 	# ─── Color-cycling hooded hacker ─────────────────────────────────────────

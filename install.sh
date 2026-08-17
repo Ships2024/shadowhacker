@@ -319,26 +319,21 @@ echo ""
 echo -e "  ${YS}Launching Shadow Hacker in 4 seconds...${CE}"
 sleep 4
 # Open a new gnome-terminal resized to the banner dimensions and launch shadow
-# Set gnome-terminal default profile size before launching
+# Kill gnome-terminal server so it re-reads profile on next launch
+pkill -f gnome-terminal-server 2>/dev/null; sleep 0.5
+
+# Set profile size to 90x38 for shadow
 _PROF=$(gsettings get org.gnome.Terminal.ProfilesList default 2>/dev/null | tr -d "' ")
 if [[ -n "$_PROF" ]]; then
   _PPATH="org.gnome.Terminal.Legacy.Profile:/org/gnome/terminal/legacy/profiles:/:${_PROF}/"
-  _OLD_COLS=$(gsettings get $_PPATH default-size-columns 2>/dev/null)
-  _OLD_ROWS=$(gsettings get $_PPATH default-size-rows 2>/dev/null)
   gsettings set $_PPATH default-size-columns 90 2>/dev/null
   gsettings set $_PPATH default-size-rows 38 2>/dev/null
 fi
 
-# Launch shadow in a new terminal
+# Launch shadow — the banner will also resize the window via xdotool
 gnome-terminal -- bash -c 'shadow; exec bash' 2>/dev/null &
-sleep 1
-
-# Restore profile size
-if [[ -n "$_PROF" && -n "$_OLD_COLS" ]]; then
-  gsettings set $_PPATH default-size-columns $_OLD_COLS 2>/dev/null
-  gsettings set $_PPATH default-size-rows $_OLD_ROWS 2>/dev/null
-fi
 
 # Close this installer terminal
+sleep 0.5
 kill $PPID 2>/dev/null || true
 exit 0
