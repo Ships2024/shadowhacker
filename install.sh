@@ -299,6 +299,15 @@ command -v uv &>/dev/null || pip3 install -q uv --break-system-packages 2>/dev/n
 (cd /root/wifit3 && uv python pin 3.13 2>/dev/null && uv sync -q --python 3.13 2>/dev/null) || true
 
 # ── Done ──────────────────────────────────────────────────────────────────────
+progress "Configuring terminal profile..."
+# Set gnome-terminal profile to 90x38 for shadow
+_PROF=$(gsettings get org.gnome.Terminal.ProfilesList default 2>/dev/null | tr -d "' ")
+if [[ -n "$_PROF" ]]; then
+  _PPATH="org.gnome.Terminal.Legacy.Profile:/org/gnome/terminal/legacy/profiles:/:${_PROF}/"
+  gsettings set $_PPATH default-size-columns 90 2>/dev/null
+  gsettings set $_PPATH default-size-rows 38 2>/dev/null
+fi
+
 progress "Finalising..."
 echo ""
 echo ""
@@ -310,9 +319,26 @@ echo ""
 echo -e "  ${YS}Launching Shadow Hacker in 4 seconds...${CE}"
 sleep 4
 # Open a new gnome-terminal resized to the banner dimensions and launch shadow
-# Launch shadow in a new terminal at the correct size
-gnome-terminal --geometry 90x38+0+0 -e 'bash -c "shadow; exec bash"' 2>/dev/null &
-sleep 0.5
+# Set gnome-terminal default profile size before launching
+_PROF=$(gsettings get org.gnome.Terminal.ProfilesList default 2>/dev/null | tr -d "' ")
+if [[ -n "$_PROF" ]]; then
+  _PPATH="org.gnome.Terminal.Legacy.Profile:/org/gnome/terminal/legacy/profiles:/:${_PROF}/"
+  _OLD_COLS=$(gsettings get $_PPATH default-size-columns 2>/dev/null)
+  _OLD_ROWS=$(gsettings get $_PPATH default-size-rows 2>/dev/null)
+  gsettings set $_PPATH default-size-columns 90 2>/dev/null
+  gsettings set $_PPATH default-size-rows 38 2>/dev/null
+fi
+
+# Launch shadow in a new terminal
+gnome-terminal -- bash -c 'shadow; exec bash' 2>/dev/null &
+sleep 1
+
+# Restore profile size
+if [[ -n "$_PROF" && -n "$_OLD_COLS" ]]; then
+  gsettings set $_PPATH default-size-columns $_OLD_COLS 2>/dev/null
+  gsettings set $_PPATH default-size-rows $_OLD_ROWS 2>/dev/null
+fi
+
 # Close this installer terminal
 kill $PPID 2>/dev/null || true
 exit 0

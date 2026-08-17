@@ -368,10 +368,18 @@ function pentestgpt_assist
 }
 function banner
 {
-	# Resize terminal window to fit banner (90 cols x 38 rows)
-	printf '\033[9;0t' 2>/dev/null   # restore from maximized if possible
-	printf '\033[8;38;90t' 2>/dev/null  # resize
-	sleep 0.1
+	# Resize terminal to fit banner using gsettings (reliable on modern Kali)
+	if [[ -n "$DISPLAY" ]]; then
+		_PROF=$(gsettings get org.gnome.Terminal.ProfilesList default 2>/dev/null | tr -d "' ")
+		if [[ -n "$_PROF" ]]; then
+			_PPATH="org.gnome.Terminal.Legacy.Profile:/org/gnome/terminal/legacy/profiles:/:${_PROF}/"
+			gsettings set $_PPATH default-size-columns 90 2>/dev/null
+			gsettings set $_PPATH default-size-rows 38 2>/dev/null
+		fi
+		# Also send escape sequence as fallback
+		printf '\033[8;38;90t' 2>/dev/null
+	fi
+	stty cols 90 rows 38 2>/dev/null
 	check_wlans
 	# ─── Color-cycling hooded hacker ─────────────────────────────────────────
 	local G1="\e[2;32m"
