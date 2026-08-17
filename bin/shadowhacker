@@ -367,6 +367,8 @@ function pentestgpt_assist
 }
 function banner
 {
+	printf '\033[9;0t' 2>/dev/null
+	sleep 0.1
 	printf '\033[8;37;90t' 2>/dev/null
 	sleep 0.1
 	check_wlans
